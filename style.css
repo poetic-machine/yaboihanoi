@@ -33,7 +33,7 @@ html, body {
 }
 
 body {
-  font-family: monospace;
+  font-family: Arial;
   position: relative;
   background-color: var(--pr-color-1);
 }
@@ -44,7 +44,6 @@ h1 {
 
 p {
   margin: 0;
-  padding: 10px;
 }
 
 #canvas {
@@ -54,4 +53,91 @@ p {
   width: 100vw;
   height: 100vh;
   z-index: -1;
+}
+
+.debug {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  color: white;
+  z-index: 1;
+}
+
+/* bio */
+#bio {
+  display: none;
+  width: 100%;
+  height: 100vh;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#bio p {
+  width: 90%;
+  max-width: 700px;
+  margin: 1rem;
+  font-size: 1.5rem;
+  color: white;
+  line-height: 2.0rem;
+}
+
+
+
+/* navbar */
+.navbar {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar button {
+  background-color: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 1);
+  margin: 2rem 4rem;
+  font-size: 2rem;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.navbar button:hover {
+  opacity: 1.0;
+}
+
+.navbar button.active {
+  opacity: 1.0;
+}
+
+.footer {
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer a {
+  background-color: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 1);
+  margin: 2rem 1rem;
+  font-size: 2rem;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.logo-img {
+  width: 25px;
+  height: 25px;
+}
+
+.footer a:hover {
+  opacity: 1.0;
 }

@@ -1,5 +1,7 @@
+const LOADING_CIRCLE_SIZE = 0.1
+const LOADING_CIRCLE_SPEED = 0.05
 class LetterAnimation {
-  constructor(ctx, url, x = 0, y = 0, scale = 0.2, angle = 0) {
+  constructor(ctx, url, x = 0, y = 0, options) {
     this.ctx = ctx
     this.url = url
     this.gif = GIF()
@@ -7,20 +9,35 @@ class LetterAnimation {
 
     this.x = x
     this.y = y
-    this.scale = scale
-    this.angle = angle
+    this.scale = (options && options.scale) ? options.scale : 0.2
+    this.originalScale = null
+    this.angle = (options && options.angle) ? options.angle : 0
     this.currentFrame = 0
 
     this.gif.shadowColor = 'rgba(0, 0, 0, 1)'
-    this.width = RESOLUTION * scale
-    this.height = RESOLUTION * scale
 
     // animation
     this.started = true
-    this.speed = 1
-    this.buttons = []
+    this.speed = (options && options.speed) ? options.speed : 0
+    this.originalSpeed = null
+    this.buttons = null
+    this.overlayDiv = null
+    this.debug = false
+
+    this.width = RESOLUTION * this.scale
+    this.height = RESOLUTION * this.scale
     
-    this.attachUI()
+    if (options) {
+      if (options.debug) {
+        this.debug = true
+      }
+      if (options.showUI) {
+        this.attachUI()
+      }
+      if (options.interactive) {
+        this.attachOverlayDiv()
+      }
+    }
   }
 
   info() {
@@ -61,12 +78,16 @@ class LetterAnimation {
   updatePos(x, y) {
     this.x = x
     this.y = y
-    this.buttons.forEach((button, i) => {
+    
+    this.buttons && this.buttons.forEach((button, i) => {
       const [bx, by] = this.getButtonsPos(i)
-
       button.style.left = `${bx}px`
       button.style.top = `${by}px`
     })
+
+    const [dx, dy] = this.getDivPosition()
+    this.overlayDiv.style.left = `${dx}px`
+    this.overlayDiv.style.top = `${dy}px`
   } 
 
   getButtonsPos(index) {
@@ -76,13 +97,24 @@ class LetterAnimation {
     ]
   }
 
+  getDivPosition() {
+    return [
+      this.x - this.width * 0.5,
+      this.y - this.height * 0.5,
+    ]
+  }
+
+
   draw() {
-    const frameCount = this.currentFrame
+    const frameCount = Math.floor(this.currentFrame)
     const frameIndex = frameCount % this.gif.frames.length
 
     const { ctx, scale, angle, x, y } = this
     ctx.save()
-    this.info()
+
+    if (this.debug) {
+      this.info()
+    }
 
     if (this.gif.complete) {
       const image = this.gif.frames[frameIndex].image
@@ -90,8 +122,11 @@ class LetterAnimation {
       ctx.rotate(angle);
       ctx.drawImage(image, -image.width / 2, -image.height / 2);
     } else {
-      this.fontStyle()
-      ctx.fillText(`loading`, x, y)
+      // this.fontStyle()
+      // ctx.fillText(`loading`, x, y)
+      ctx.beginPath()
+      ctx.arc(x, y, this.width * LOADING_CIRCLE_SIZE * (1 + 0.1 * Math.sin(this.currentFrame * LOADING_CIRCLE_SPEED)), 0, Math.PI * 2)
+      ctx.fill()
     }
 
     ctx.restore()
@@ -100,6 +135,43 @@ class LetterAnimation {
     if (this.started) {
       this.currentFrame = this.currentFrame + this.speed
     }
+  }
+
+
+  attachOverlayDiv() {
+    const div = document.createElement('DIV')
+    div.style.position = 'absolute'
+
+    const [dx, dy] = this.getDivPosition()
+
+    div.style.left = `${dx}px`
+    div.style.top = `${dy}px`
+    div.style.width = `${this.width}px`
+    div.style.height = `${this.height}px`
+    document.body.appendChild(div)
+
+    if (!this.debug) {
+      div.style.opacity = 0;
+    }
+    div.style.color = 'rgba(255, 255, 255, 1)'
+    div.textContent = '[interactive]'
+    div.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
+
+    div.addEventListener('mouseover', () => {
+      this.originalScale = this.scale
+      this.originalSpeed = this.speed
+      this.scale = this.scale * 1.1
+      this.speed = this.speed * 2.0
+    })
+
+    div.addEventListener('mouseleave', () => {
+      this.scale = this.originalScale
+      this.speed = this.originalSpeed
+      this.originalScale = null
+      this.originalSpeed = null
+    })
+
+    this.overlayDiv = div
   }
 
   attachUI() {
@@ -130,5 +202,21 @@ class LetterAnimation {
 
   }
 
+  removeUI() {
+    this.buttons.forEach(b => {
+      b.remove()
+    })
+    this.buttons = null
+  }
+
+  toggleDebug(on = true) {
+    if (on) {
+      this.debug = true
+      this.overlayDiv.style.opacity = 1
+    } else {
+      this.debug = false
+      this.overlayDiv.style.opacity = 0
+    }
+  }
   
 }
