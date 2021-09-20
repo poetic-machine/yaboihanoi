@@ -1,20 +1,4 @@
-/******************************************************************************
-START Glitch hello-app default styles
 
-The styles in this section do some minimal CSS resets, set default fonts and 
-colors, and handle the layout for our footer and "Remix on Glitch" button. If
-you're new to CSS they may seem a little complicated, but you can scroll down
-to this section's matching END comment to see page-specific styles.
-******************************************************************************/
-
-
-/* 
-  The style rules specify elements by type and by attributes such as class and ID
-  Each section indicates an element or elements, then lists the style properties to apply
-  See if you can cross-reference the rules in this file with the elements in index.html
-*/
-
-/* Our default values set as CSS variables */
 :root {
   --color-bg: #69F7BE;
   --color-text-main: #000000;
@@ -24,6 +8,14 @@ to this section's matching END comment to see page-specific styles.
   --image-margin: 3rem;
   --font-family: "HK Grotesk";
   --font-family-header: "HK Grotesk";
+
+  --pr-color-1: rgba(209, 152, 176, 1);
+  --pr-color-2: rgba(30, 66, 124, 1);
+  --pr-color-3: rgba(240, 195, 108, 1);
+  --pr-color-4: rgba(48, 82, 72, 1);
+  --sn-color-1: rgba(126, 51, 56, 1);
+  --sn-color-2: rgba(117, 200, 147, 1);
+  --sn-color-3: rgba(224, 142, 108, 1);
 }
 
 /* Basic page style resets */
@@ -34,24 +26,32 @@ to this section's matching END comment to see page-specific styles.
   display: none !important;
 }
 
-/* Import fonts */
-@font-face {
-  font-family: HK Grotesk;
-  src: url("https://cdn.glitch.com/605e2a51-d45f-4d87-a285-9410ad350515%2FHKGrotesk-Regular.otf?v=1603136326027")
-    format("opentype");
-}
-@font-face {
-  font-family: HK Grotesk;
-  font-weight: bold;
-  src: url("https://cdn.glitch.com/605e2a51-d45f-4d87-a285-9410ad350515%2FHKGrotesk-Bold.otf?v=1603136323437")
-    format("opentype");
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
 }
 
 body {
-  font-family: HK Grotesk;
+  font-family: monospace;
+  position: relative;
+  background-color: var(--pr-color-1);
 }
 
-/* Subheading */
-h2 {
-  color: #2800FF;
+h1 {
+  margin: 0;
+}
+
+p {
+  margin: 0;
+  padding: 10px;
+}
+
+#canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
 }
