@@ -2,6 +2,8 @@ const canvas = document.getElementById('canvas')
 const ctx = canvas.getContext('2d')
 const uiCheckbox = document.getElementById('uiCheckbox')
 const debugCheckbox = document.getElementById('debugCheckbox')
+const bioDiv = document.getElementById('bio')
+const contactDiv = document.getElementById('contact')
 let gifs = []
 let frameCount = 0
 
@@ -154,9 +156,26 @@ function createGradient(ctx) {
 }
 
 function addNavEvents() {
-  
+  const navButtons = document.getElementById('navbar').children
+  for (let i = 0; i < 3; i++) {
+    navButtons[i].addEventListener('click', () => {
+      canvas.style.display = 'none'
+      bioDiv.style.display = 'none'
+      contactDiv.style.display = 'none'
+
+      if (i === 0) {
+        canvas.style.display = 'block'
+      } else if (i === 1) {
+        bioDiv.style.display = 'flex'
+      } else if (i === 2) {
+        contactDiv.style.display = 'flex'
+      }
+    })
+  }
+
 }
 
 randomizeBodyBackgroundColor()
+addNavEvents()
 init()
 draw(ctx)
