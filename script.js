@@ -47,6 +47,8 @@ function getAllFileNames() {
 
 function getPosition(i) {
 
+  const ratio = canvas.width / 1300
+
   const midX = canvas.width * 0.5
   const midY = canvas.height * 0.5
   const cols = 5
@@ -55,10 +57,15 @@ function getPosition(i) {
   const col = i % cols
   const row = Math.floor(i / cols)
 
-  const x = midX + 250 * (col - (cols - 1) * 0.5)
+  const x = midX + 250 * (col - (cols - 1) * 0.5) * Math.min(1, ratio)
   const y = midY + 250 * (row - (rows - 1) * 0.5)
 
   return [x, y]
+}
+
+function getLetterScale() {
+  const ratio = canvas.width / 1300
+  return DEFAULT_SCALE * Math.min(1, ratio)
 }
 
 function init() {
@@ -88,6 +95,7 @@ function init() {
     gifs.forEach((gif, i) => {
       const [x, y] = getPosition(i)
       gif.updatePos(x, y)
+      gif.scale = getLetterScale()
     })
   })
   uiCheckbox.addEventListener('change', e => {
