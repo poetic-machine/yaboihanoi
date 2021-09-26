@@ -1,4 +1,6 @@
-console.log(mobileCheck() ? '[mobile]' : '[non-mobile]')
+const isMobile = mobileCheck()
+console.log(isMobile ? '[mobile]' : '[non-mobile]')
+
 
 const canvas = document.getElementById('canvas')
 const ctx = canvas.getContext('2d')
@@ -24,7 +26,7 @@ const COLOR_PALLETE = [
   'rgba(224, 142, 108, 1)',
 ]
 
-const RESOLUTION = 180
+const RESOLUTION = isMobile ? 90 : 180
 const GLOBAL_SCALE = 360 / RESOLUTION
 const DEFAULT_SCALE = 0.5 * GLOBAL_SCALE
 const DEFAULT_SPEED = [
@@ -95,10 +97,19 @@ function getLetterScale() {
 }
 
 function init() {
-  canvas.width = window.innerWidth
-  canvas.height = window.innerHeight
+  ctx.canvas.width = window.innerWidth
+  ctx.canvas.height = window.innerHeight
 
   const allGifFileNames = getAllFileNamesForEveryAnimations()
+
+  function isHide(animationIndex) {
+    if (isMobile) {
+      return animationIndex !== 0 && animationIndex !== 1
+    } else {
+      return animationIndex !== 0
+    }
+  }
+
   gifsArray = allGifFileNames.flat().map((gifFileNames, animationIndex) => {
     return Object.keys(gifFileNames).map((key, i) => {
       const f = gifFileNames[key]
@@ -110,7 +121,7 @@ function init() {
         interactive: true,
         showUI: false,
         debug: false,
-        hide: animationIndex !== 0,
+        hide: isHide(animationIndex),
       })
     })
   })
@@ -118,8 +129,8 @@ function init() {
   gifs = gifsArray[currentAnimationIndex]
 
   window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
+    ctx.canvas.width = window.innerWidth
+    ctx.canvas.height = window.innerHeight
     updateGifPositionAndScale()
   })
   uiCheckbox.addEventListener('change', e => {
@@ -141,26 +152,59 @@ function init() {
 }
 
 async function switchAnimationSet() {
-  for (let i = 0; i < NUM_OF_LETTERS; i++) {
-    if (gifs[i].appearing || !gifs[i].complete()) return
+  if (!isMobile) {
+
+    for (let i = 0; i < NUM_OF_LETTERS; i++) {
+      if (gifs[i].appearing || !gifs[i].complete()) return
+    }
+  
+    await Promise.all(Array(NUM_OF_LETTERS).fill(null).map((_, i) => {
+      return promiseTimeout(() => {
+        gifs[i].disappear()
+      }, 100 * i)
+    }))
+  
+    currentAnimationIndex = getNextAnimationIndex()
+    gifs = gifsArray[currentAnimationIndex]
+    updateGifPositionAndScale(true)
+  
+    await Promise.all(Array(NUM_OF_LETTERS).fill(null).map((_, i) => {
+      return promiseTimeout(() => {
+        gifs[i].appear()
+      }, 100 * i)
+    }))
+
+  } else {
+
+    for (let i = 0; i < NUM_OF_LETTERS; i++) {
+      if (gifs[i].appearing || !gifs[i].complete()) return
+    }
+  
+    await Promise.all(Array(NUM_OF_LETTERS).fill(null).map((_, i) => {
+      return promiseTimeout(() => {
+        gifs[i].disappear()
+        gifsArray[getNextAnimationIndex(currentAnimationIndex)][i].disappear()
+      }, 100 * i)
+    }))
+  
+    currentAnimationIndex = (currentAnimationIndex + 2) % NUM_LETTER_SET
+    gifs = gifsArray[currentAnimationIndex]
+    updateGifPositionAndScale(true)
+  
+    await Promise.all(Array(NUM_OF_LETTERS).fill(null).map((_, i) => {
+      return promiseTimeout(() => {
+        gifs[i].appear()
+        gifsArray[getNextAnimationIndex(currentAnimationIndex)][i].appear()
+      }, 100 * i)
+    }))
+
   }
-
-  await Promise.all(Array(NUM_OF_LETTERS).fill(null).map((_, i) => {
-    return promiseTimeout(() => {
-      gifs[i].disappear()
-    }, 100 * i)
-  }))
-
-  currentAnimationIndex = (currentAnimationIndex + 1) % NUM_LETTER_SET
-  gifs = gifsArray[currentAnimationIndex]
-  updateGifPositionAndScale(true)
-
-  await Promise.all(Array(NUM_OF_LETTERS).fill(null).map((_, i) => {
-    return promiseTimeout(() => {
-      gifs[i].appear()
-    }, 100 * i)
-  }))
 }
+
+function getNextAnimationIndex() {
+  return (currentAnimationIndex + 1) % NUM_LETTER_SET
+}
+
 
 function promiseTimeout(cb, time) {
   return new Promise(res => {
@@ -177,26 +221,40 @@ function updateGifPositionAndScale(setOriginalScale = false) {
     gif.updatePos(x, y)
     if (!setOriginalScale) {
       gif.scale = getLetterScale()
+      gif.updateWidthAndHeightToScale(gif.scale * RESOLUTION, gif.scale * RESOLUTION)
     } else {
       gif.originalScale = getLetterScale()
+      gif.updateWidthAndHeightToScale(gif.originalScale * RESOLUTION, gif.originalScale * RESOLUTION)
     }
   })
 }
 
-function draw(ctx) {
-  
+function draw(ctx) {  
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
   ctx.globalCompositeOperation = "source-over"
-
-  const midX = canvas.width * 0.5
-  const midY = canvas.height * 0.5
-  const cols = 5
-  const rows = Math.ceil(gifs.length / cols)
-
-  gifs.forEach((gif, i) => {
-    gif.draw()
-  })
+  
+  if (!isMobile) {
+    gifs.forEach((gif, i) => {
+      gif.draw()
+    })
+  } else {
+    gifs.forEach((gif, col) => {
+      for (let i = -4; i < 5; i++) {
+        if (i === 0) {
+          gif.draw()
+          // gifsArray[getNextAnimationIndex(currentAnimationIndex)][col].draw()
+        } else {
+          if (i % 2 === 0) {
+            gif.draw(false, 0, i * 70)
+          } else {
+            gifsArray[getNextAnimationIndex(currentAnimationIndex)][col].draw(i === 1, 0, i * 70)
+          }
+        }
+      }
+  
+    })
+  }
 
   gifsArray.forEach((otherGifs, i)=> {
     if (i === currentAnimationIndex) return
@@ -207,6 +265,7 @@ function draw(ctx) {
   
   ctx.fillStyle = 'rgba(255, 255, 255, 1)'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
+  
 
   frameCount += 1
 

@@ -63,6 +63,9 @@ class LetterAnimation {
       ['index', this.currentFrame % this.gif.frames.length],
       ['frames length', this.gif.frames.length],
       ['scale', this.scale],
+      ['width', this.width],
+      ['x', this.x],
+      ['y', this.y],
       ['[api]framesCount', this.gif.frameCount],
       ['[api]complete', this.gif.complete],
     ]
@@ -73,6 +76,11 @@ class LetterAnimation {
       ctx.fillText(`${t[0]}:${t[1]}`, this.x - 30, this.y + 70 + lineHeight * i)
     })
     
+  }
+
+  updateWidthAndHeightToScale(w, h) {
+    this.width = w
+    this.height = h
   }
 
   fontStyle() {
@@ -124,7 +132,7 @@ class LetterAnimation {
   }
 
 
-  draw() {
+  draw(updateFrame = true, offx = 0, offy = 0) {
     this.update()
     const frameCount = Math.floor(this.currentFrame)
     const frameIndex = frameCount % this.gif.frames.length
@@ -139,21 +147,20 @@ class LetterAnimation {
     if (this.gif.complete) {
       const image = this.gif.frames[frameIndex].image
       ctx.save()
-      ctx.setTransform(scale, 0, 0, scale, x, y);
+      ctx.setTransform(scale, 0, 0, scale, x + offx, y + offy);
       ctx.rotate(angle);
       ctx.drawImage(image, -image.width / 2, -image.height / 2);
       ctx.restore()
     }
     if (!this.gif.complete) {
       ctx.beginPath()
-      ctx.arc(x, y, this.width * LOADING_CIRCLE_SIZE * (1 + 0.1 * Math.sin(this.currentFrame * LOADING_CIRCLE_SPEED)), 0, Math.PI * 2)
+      ctx.arc(x + offx, y + offy, this.width * LOADING_CIRCLE_SIZE * (1 + 0.1 * Math.sin(this.currentFrame * LOADING_CIRCLE_SPEED)), 0, Math.PI * 2)
       ctx.fill()
     }
 
     ctx.restore()
-
     
-    if (this.started) {
+    if (this.started && updateFrame) {
       this.currentFrame = this.currentFrame + this.speed
     }
   }
@@ -179,7 +186,7 @@ class LetterAnimation {
       div.style.opacity = 0;
     }
     div.style.color = 'rgba(255, 255, 255, 1)'
-    div.textContent = '[interactive]'
+    // div.textContent = '[interactive]'
     div.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
 
     div.addEventListener('mouseover', () => {
