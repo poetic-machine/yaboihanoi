@@ -132,9 +132,9 @@ class LetterAnimation {
   }
 
 
-  draw(updateFrame = true, offx = 0, offy = 0) {
+  draw(updateFrame = true, offx = 0, offy = 0, frameOffset = 0) {
     this.update()
-    const frameCount = Math.floor(this.currentFrame)
+    const frameCount = Math.floor(this.currentFrame + frameOffset * this.speed) + this.gif.frames.length
     const frameIndex = frameCount % this.gif.frames.length
 
     const { ctx, scale, angle, x, y } = this

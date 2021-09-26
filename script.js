@@ -31,9 +31,9 @@ const GLOBAL_SCALE = 360 / RESOLUTION
 const DEFAULT_SCALE = 0.5 * GLOBAL_SCALE
 const DEFAULT_SPEED = [
   { 'Y': 1.0, 'A': 1/3, 'B': 1.5, 'O': 1.0, 'I': 0.5 },
-  { 'H': 1.0, 'A': 1.0, 'N': 1.0, 'O': 1.0, 'I': 1.0 },
-  { 'Y': 1.0, 'A': 1/3, 'B': 1.5, 'O': 1.0, 'I': 0.5 },
-  { 'H': 0.5, 'A': 1.0, 'N': 1.0, 'O': 1.0, 'I': 1.0 },
+  { 'H': 0.5, 'A': 1.0, 'N': 0.5, 'O': 1.0, 'I': 1.0 },
+  { 'Y': 0.5, 'A': 1.0, 'B': 1.5, 'O': 1.0, 'I': 0.5 },
+  { 'H': 0.5, 'A': 2.0, 'N': 1.0, 'O': 1.0, 'I': 1.0 },
 ]
 const NUM_OF_LETTERS = 5
 const NUM_LETTER_SET = 4
@@ -246,9 +246,9 @@ function draw(ctx) {
           // gifsArray[getNextAnimationIndex(currentAnimationIndex)][col].draw()
         } else {
           if (i % 2 === 0) {
-            gif.draw(false, 0, i * 70)
+            gif.draw(false, 0, i * 70, i * 3)
           } else {
-            gifsArray[getNextAnimationIndex(currentAnimationIndex)][col].draw(i === 1, 0, i * 70)
+            gifsArray[getNextAnimationIndex(currentAnimationIndex)][col].draw(i === 1, 0, i * 70, i * 5)
           }
         }
       }
