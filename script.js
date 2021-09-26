@@ -4,7 +4,10 @@ const uiCheckbox = document.getElementById('uiCheckbox')
 const debugCheckbox = document.getElementById('debugCheckbox')
 const bioDiv = document.getElementById('bio')
 const contactDiv = document.getElementById('contact')
+const changeButton = document.getElementById('changeButton')
 let gifs = []
+let gifsArray = []
+let currentAnimationIndex = 0
 let frameCount = 0
 
 const COLOR_PALLETE = [
@@ -17,19 +20,37 @@ const COLOR_PALLETE = [
   'rgba(224, 142, 108, 1)',
 ]
 const DEFAULT_SCALE = 0.5
-const DEFAULT_SPEED = {
-  'A': 1/3, 'Y': 1.0, 'B': 1.5, 'O': 1.0, 'I': 0.5,
-}
+const DEFAULT_SPEED = [
+  { 'Y': 1.0, 'A': 1/3, 'B': 1.5, 'O': 1.0, 'I': 0.5 },
+  { 'H': 1.0, 'A': 1.0, 'N': 1.0, 'O': 1.0, 'I': 1.0 },
+  { 'Y': 1.0, 'A': 1/3, 'B': 1.5, 'O': 1.0, 'I': 0.5 },
+  { 'H': 1.0, 'A': 1.0, 'N': 1.0, 'O': 1.0, 'I': 1.0 },
+]
 const RESOLUTION = 360
+const NUM_OF_LETTERS = 5
+const NUM_LETTER_SET = 4
 const GIF_PATH = './assets/gifs/'
 const YABOI_HANOI = 'Yaboi_Hanoi'
 const WORDS = 'Yaboi'
 const LANGS = ['Eng', 'Thai']
-let GIF_FILENAMES
 
 function randomizeBodyBackgroundColor() {
   const index = Math.floor(Math.random() * 4)
   document.body.style.backgroundColor = COLOR_PALLETE[index]
+}
+
+function getAllFileNamesForEveryAnimations() {
+  return LANGS.map(lang => {
+    const fs = []
+    YABOI_HANOI.split('_').forEach((word, index) => {
+      fs[index] = []
+      const chars = word.toUpperCase().split('')
+      chars.forEach(ch => {
+        fs[index][ch] = `${GIF_PATH}${word}_${lang}_${ch}_delay_0_${RESOLUTION}.gif`
+      })
+    })
+    return fs
+  })
 }
 
 function getAllFileNames() {
@@ -38,7 +59,6 @@ function getAllFileNames() {
   WORDS.split('_').forEach(word => {
     const chars = word.toUpperCase().split('')
     chars.forEach(ch => {
-      // fs.push(`${GIF_PATH}${word}_${lang}_${ch}_delay_0_${RESOLUTION}.gif`)
       fs[ch] = `${GIF_PATH}${word}_${lang}_${ch}_delay_0_${RESOLUTION}.gif`
     })
   })
@@ -52,7 +72,7 @@ function getPosition(i) {
   const midX = canvas.width * 0.5
   const midY = canvas.height * 0.5
   const cols = 5
-  const rows = Math.ceil(Object.keys(GIF_FILENAMES).length / cols)
+  const rows = Math.ceil(NUM_OF_LETTERS / cols)
 
   const col = i % cols
   const row = Math.floor(i / cols)
@@ -69,34 +89,32 @@ function getLetterScale() {
 }
 
 function init() {
-
-
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
-  GIF_FILENAMES = getAllFileNames()
 
-  gifs = Object.keys(GIF_FILENAMES).map((key, i) => {
-    const f = GIF_FILENAMES[key]
-    const [x, y] = getPosition(i)
-
-    return new LetterAnimation(ctx, f, x, y, { 
-      speed: DEFAULT_SPEED[key] || null,
-      scale: DEFAULT_SCALE,
-      interactive: true,
-      showUI: false,
-      debug: false,
+  const allGifFileNames = getAllFileNamesForEveryAnimations()
+  gifsArray = allGifFileNames.flat().map((gifFileNames, animationIndex) => {
+    return Object.keys(gifFileNames).map((key, i) => {
+      const f = gifFileNames[key]
+      const [x, y] = getPosition(i)
+  
+      return new LetterAnimation(ctx, f, x, y, { 
+        speed: DEFAULT_SPEED[animationIndex][key] || null,
+        scale: DEFAULT_SCALE,
+        interactive: true,
+        showUI: false,
+        debug: false,
+        hide: animationIndex !== 0,
+      })
     })
   })
+
+  gifs = gifsArray[currentAnimationIndex]
 
   window.addEventListener('resize', () => {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
-
-    gifs.forEach((gif, i) => {
-      const [x, y] = getPosition(i)
-      gif.updatePos(x, y)
-      gif.scale = getLetterScale()
-    })
+    updateGifPositionAndScale()
   })
   uiCheckbox.addEventListener('change', e => {
     toggleButtons(e.target.checked)
@@ -106,6 +124,52 @@ function init() {
     toggleDebug(e.target.checked)
   })
 
+  changeButton.addEventListener('click', async () => {
+
+    for (let i = 0; i < NUM_OF_LETTERS; i++) {
+      if (gifs[i].appearing) return
+    }
+
+    currentAnimationIndex = (currentAnimationIndex + 1) % NUM_LETTER_SET
+    let nextGifs = gifsArray[currentAnimationIndex]
+
+    await Promise.all(Array(NUM_OF_LETTERS).fill(null).map((_, i) => {
+      return promiseTimeout(() => {
+        gifs[i].disappear()
+      }, 100 * i)
+    }))
+
+    gifs = nextGifs
+    updateGifPositionAndScale(true)
+
+    await Promise.all(Array(NUM_OF_LETTERS).fill(null).map((_, i) => {
+      return promiseTimeout(() => {
+        gifs[i].appear()
+      }, 100 * i)
+    }))
+  })
+
+}
+
+function promiseTimeout(cb, time) {
+  return new Promise(res => {
+    setTimeout(() => {
+      cb()
+      res()
+    }, time)
+  })
+}
+
+function updateGifPositionAndScale(setOriginalScale = false) {
+  gifs.forEach((gif, i) => {
+    const [x, y] = getPosition(i)
+    gif.updatePos(x, y)
+    if (!setOriginalScale) {
+      gif.scale = getLetterScale()
+    } else {
+      gif.originalScale = getLetterScale()
+    }
+  })
 }
 
 function draw(ctx) {
@@ -121,6 +185,11 @@ function draw(ctx) {
 
   gifs.forEach((gif, i) => {
     gif.draw()
+  })
+
+  gifsArray.forEach((otherGifs, i)=> {
+    if (i === currentAnimationIndex) return
+    otherGifs.forEach(g => g.update())
   })
 
   ctx.globalCompositeOperation = "source-in"

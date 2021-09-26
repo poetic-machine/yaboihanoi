@@ -10,7 +10,10 @@ class LetterAnimation {
     this.x = x
     this.y = y
     this.scale = (options && options.scale) ? options.scale : 0.2
-    this.originalScale = null
+    this.originalScale = this.scale
+    this.interactiveScale = null
+
+
     this.angle = (options && options.angle) ? options.angle : 0
     this.currentFrame = 0
 
@@ -19,13 +22,17 @@ class LetterAnimation {
     // animation
     this.started = true
     this.speed = (options && options.speed) ? options.speed : 0
-    this.originalSpeed = null
+    this.interactiveSpeed = null
     this.buttons = null
     this.overlayDiv = null
     this.debug = false
 
     this.width = RESOLUTION * this.scale
     this.height = RESOLUTION * this.scale
+
+    // show & disappear
+    this.appearing = false
+    this.disappearing = false
     
     if (options) {
       if (options.debug) {
@@ -36,6 +43,13 @@ class LetterAnimation {
       }
       if (options.interactive) {
         this.attachOverlayDiv()
+      }
+
+      if (options.hide) {
+        // reset scale to disappeared
+        this.originalScale = this.scale
+        this.scale = 0    
+        this.overlayDiv.style.display = 'none'
       }
     }
   }
@@ -48,6 +62,7 @@ class LetterAnimation {
       ['frameCount', this.currentFrame],
       ['index', this.currentFrame % this.gif.frames.length],
       ['frames length', this.gif.frames.length],
+      ['scale', this.scale],
       ['[api]framesCount', this.gif.frameCount],
       ['[api]complete', this.gif.complete],
     ]
@@ -92,7 +107,7 @@ class LetterAnimation {
 
   getButtonsPos(index) {
     return [
-      this.x + (index - (this.buttons.length - 1) * 0.5) * 50,
+      this.x + (index - (this.buttons.length - 1) * 0.5) * 40,
       this.y - this.height * 0.5 - 30,
     ]
   }
@@ -106,6 +121,7 @@ class LetterAnimation {
 
 
   draw() {
+    this.update()
     const frameCount = Math.floor(this.currentFrame)
     const frameIndex = frameCount % this.gif.frames.length
 
@@ -118,12 +134,13 @@ class LetterAnimation {
 
     if (this.gif.complete) {
       const image = this.gif.frames[frameIndex].image
+      ctx.save()
       ctx.setTransform(scale, 0, 0, scale, x, y);
       ctx.rotate(angle);
       ctx.drawImage(image, -image.width / 2, -image.height / 2);
-    } else {
-      // this.fontStyle()
-      // ctx.fillText(`loading`, x, y)
+      ctx.restore()
+    }
+    if (!this.gif.complete) {
       ctx.beginPath()
       ctx.arc(x, y, this.width * LOADING_CIRCLE_SIZE * (1 + 0.1 * Math.sin(this.currentFrame * LOADING_CIRCLE_SPEED)), 0, Math.PI * 2)
       ctx.fill()
@@ -137,6 +154,10 @@ class LetterAnimation {
     }
   }
 
+  update() {
+    this.updateAppear()
+    this.updateDisappear()
+  }
 
   attachOverlayDiv() {
     const div = document.createElement('DIV')
@@ -158,17 +179,19 @@ class LetterAnimation {
     div.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
 
     div.addEventListener('mouseover', () => {
-      this.originalScale = this.scale
-      this.originalSpeed = this.speed
+      if (this.appearing || this.disappearing) return
+      this.interactiveScale = this.scale
+      this.interactiveSpeed = this.speed
       this.scale = this.scale * 1.1
       this.speed = this.speed * 2.0
     })
 
     div.addEventListener('mouseleave', () => {
-      this.scale = this.originalScale
-      this.speed = this.originalSpeed
-      this.originalScale = null
-      this.originalSpeed = null
+      if (this.appearing || this.disappearing || this.interactiveScale === null || this.interactiveSpeed === null) return
+      this.scale = this.interactiveScale
+      this.speed = this.interactiveSpeed
+      this.interactiveScale = null
+      this.interactiveSpeed = null
     })
 
     this.overlayDiv = div
@@ -179,7 +202,9 @@ class LetterAnimation {
     const buttonsData = [
       { text: 'start', cb: () => this.startGif() },
       { text: 'stop', cb: () => this.stopGif() },
-      { text: 'spd', cb: () => this.changeSpeed() },,
+      { text: 'spd', cb: () => this.changeSpeed() },
+      { text: 'show', cb: () => this.appear() },
+      { text: 'hide', cb: () => this.disappear() },
     ]
     
     this.buttons = buttonsData.map(() => {})
@@ -218,5 +243,35 @@ class LetterAnimation {
       this.overlayDiv.style.opacity = 0
     }
   }
-  
+
+  appear() {
+    this.appearing = true
+    this.overlayDiv.style.display = 'block'
+  }
+
+  updateAppear() {
+    if (this.appearing) {
+      this.scale += Math.pow((this.originalScale - this.scale), 2) * 0.8
+      if (this.originalScale - this.scale < 2e-2) {
+        this.scale = this.originalScale
+        this.appearing = false
+      }
+    }
+  }
+
+  disappear() {
+    this.disappearing = true
+    this.originalScale = this.scale
+    this.overlayDiv.style.display = 'none'
+  }
+
+  updateDisappear() {
+    if (this.disappearing) {
+      this.scale -= Math.pow(1 - this.scale, 1.0) * 0.07
+      if (this.scale < 2e-2) {
+        this.scale = 0
+        this.disappearing = false
+      }
+    }
+  }
 }
