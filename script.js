@@ -1,3 +1,5 @@
+console.log(mobileCheck() ? '[mobile]' : '[non-mobile]')
+
 const canvas = document.getElementById('canvas')
 const ctx = canvas.getContext('2d')
 const uiCheckbox = document.getElementById('uiCheckbox')
@@ -9,7 +11,9 @@ let gifs = []
 let gifsArray = []
 let currentAnimationIndex = 0
 let frameCount = 0
+let switchAnimationIntervalId
 
+const SWITCH_ANIMATION_INTERVAL_TIME = 5000
 const COLOR_PALLETE = [
   'rgba(209, 152, 176, 1)',
   'rgba(30, 66, 124, 1)',
@@ -19,14 +23,16 @@ const COLOR_PALLETE = [
   'rgba(117, 200, 147, 1)',
   'rgba(224, 142, 108, 1)',
 ]
-const DEFAULT_SCALE = 0.5
+
+const RESOLUTION = 180
+const GLOBAL_SCALE = 360 / RESOLUTION
+const DEFAULT_SCALE = 0.5 * GLOBAL_SCALE
 const DEFAULT_SPEED = [
   { 'Y': 1.0, 'A': 1/3, 'B': 1.5, 'O': 1.0, 'I': 0.5 },
   { 'H': 1.0, 'A': 1.0, 'N': 1.0, 'O': 1.0, 'I': 1.0 },
   { 'Y': 1.0, 'A': 1/3, 'B': 1.5, 'O': 1.0, 'I': 0.5 },
-  { 'H': 1.0, 'A': 1.0, 'N': 1.0, 'O': 1.0, 'I': 1.0 },
+  { 'H': 0.5, 'A': 1.0, 'N': 1.0, 'O': 1.0, 'I': 1.0 },
 ]
-const RESOLUTION = 360
 const NUM_OF_LETTERS = 5
 const NUM_LETTER_SET = 4
 const GIF_PATH = './assets/gifs/'
@@ -100,7 +106,7 @@ function init() {
   
       return new LetterAnimation(ctx, f, x, y, { 
         speed: DEFAULT_SPEED[animationIndex][key] || null,
-        scale: DEFAULT_SCALE,
+        scale: getLetterScale(),
         interactive: true,
         showUI: false,
         debug: false,
@@ -124,31 +130,36 @@ function init() {
     toggleDebug(e.target.checked)
   })
 
-  changeButton.addEventListener('click', async () => {
-
-    for (let i = 0; i < NUM_OF_LETTERS; i++) {
-      if (gifs[i].appearing) return
-    }
-
-    currentAnimationIndex = (currentAnimationIndex + 1) % NUM_LETTER_SET
-    let nextGifs = gifsArray[currentAnimationIndex]
-
-    await Promise.all(Array(NUM_OF_LETTERS).fill(null).map((_, i) => {
-      return promiseTimeout(() => {
-        gifs[i].disappear()
-      }, 100 * i)
-    }))
-
-    gifs = nextGifs
-    updateGifPositionAndScale(true)
-
-    await Promise.all(Array(NUM_OF_LETTERS).fill(null).map((_, i) => {
-      return promiseTimeout(() => {
-        gifs[i].appear()
-      }, 100 * i)
-    }))
+  changeButton.addEventListener('click', () => {
+    switchAnimationSet()
   })
 
+  switchAnimationIntervalId = setInterval(() => {
+    switchAnimationSet()
+  }, SWITCH_ANIMATION_INTERVAL_TIME)
+
+}
+
+async function switchAnimationSet() {
+  for (let i = 0; i < NUM_OF_LETTERS; i++) {
+    if (gifs[i].appearing || !gifs[i].complete()) return
+  }
+
+  await Promise.all(Array(NUM_OF_LETTERS).fill(null).map((_, i) => {
+    return promiseTimeout(() => {
+      gifs[i].disappear()
+    }, 100 * i)
+  }))
+
+  currentAnimationIndex = (currentAnimationIndex + 1) % NUM_LETTER_SET
+  gifs = gifsArray[currentAnimationIndex]
+  updateGifPositionAndScale(true)
+
+  await Promise.all(Array(NUM_OF_LETTERS).fill(null).map((_, i) => {
+    return promiseTimeout(() => {
+      gifs[i].appear()
+    }, 100 * i)
+  }))
 }
 
 function promiseTimeout(cb, time) {
@@ -256,3 +267,5 @@ randomizeBodyBackgroundColor()
 addNavEvents()
 init()
 draw(ctx)
+
+

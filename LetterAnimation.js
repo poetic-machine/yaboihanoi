@@ -80,6 +80,10 @@ class LetterAnimation {
     this.ctx.font = "8px monospace";
   }
 
+  complete() {
+    return this.gif.complete
+  }
+
   startGif() {
     this.started = true
   }
@@ -251,7 +255,7 @@ class LetterAnimation {
 
   updateAppear() {
     if (this.appearing) {
-      this.scale += Math.pow((this.originalScale - this.scale), 2) * 0.8
+      this.scale += Math.pow((this.originalScale - this.scale), 1) * 0.2
       if (this.originalScale - this.scale < 2e-2) {
         this.scale = this.originalScale
         this.appearing = false
@@ -267,7 +271,7 @@ class LetterAnimation {
 
   updateDisappear() {
     if (this.disappearing) {
-      this.scale -= Math.pow(1 - this.scale, 1.0) * 0.07
+      this.scale *= 0.95
       if (this.scale < 2e-2) {
         this.scale = 0
         this.disappearing = false
