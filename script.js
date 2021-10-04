@@ -26,7 +26,7 @@ const COLOR_PALLETE = [
   'rgba(224, 142, 108, 1)',
 ]
 
-const RESOLUTION = isMobile ? 90 : 180
+const RESOLUTION = isMobile ? 90 : 360
 const GLOBAL_SCALE = 360 / RESOLUTION
 const DEFAULT_SCALE = 0.5 * GLOBAL_SCALE
 const DEFAULT_SPEED = [
