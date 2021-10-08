@@ -34,7 +34,7 @@ html, body, .wrapper {
 }
 
 body {
-  font-family: Arial;
+  font-family: Verdana;
   position: relative;
   background-color: var(--pr-color-1);
 }
@@ -107,7 +107,7 @@ p {
   border: none;
   color: rgba(255, 255, 255, 1);
   margin: 2rem 4rem;
-  font-size: 2rem;
+  font-size: 1.2rem;
   /* font-style: italic; */
   opacity: 0.8;
 }
